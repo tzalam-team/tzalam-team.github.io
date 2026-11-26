@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>צל״ם הצוות</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Secular+One&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#ECE7D4;--paper:#F8F5EA;--panel:#E0D9BE;--ink:#232A19;--ink-2:#5B614A;--line:#CBC3A3;
+  --olive:#4B5D2F;--olive-hover:#3E4E26;--on-olive:#F5F1E1;--band:#36441F;--band-ink:#EAE5CC;
+  --ok:#36650F;--ok-bg:#DCEAC6;--warn:#835308;--warn-bg:#F5E2B8;--bad:#962A2A;--bad-bg:#F4D4CF;--bar:#6F8443;--focus:#8A6A1F;
+  --f-display:"Secular One","Heebo",system-ui,sans-serif;--f-body:"Heebo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#181C12;--paper:#22271A;--panel:#2C3322;--ink:#E8E3CD;--ink-2:#A8A78D;--line:#3B442E;
+  --olive:#8FA65A;--olive-hover:#A3BA6C;--on-olive:#161A10;--band:#242B18;--band-ink:#E8E3CD;
+  --ok:#A9D27B;--ok-bg:#2A3B1B;--warn:#E7B85E;--warn-bg:#3B2E13;--bad:#F09B91;--bad-bg:#42221F;--bar:#8FA65A;--focus:#E7B85E;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{direction:rtl;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-left:16px;padding-right:16px}
+header.band{background:var(--band);color:var(--band-ink)}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:18px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(24px,4vw,32px);margin:0}
+.sub{font-size:13px;opacity:.85;margin:2px 0 0}
+.stamp{border:2px solid var(--band-ink);border-radius:4px;padding:4px 10px;font-family:var(--f-display);font-size:14px;transform:rotate(-2deg);opacity:.9}
+main.wrap{display:flex;flex-direction:column;gap:22px;padding-block:22px 48px}
+h2{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 10px}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border-radius:8px;padding:12px 14px}
+.tile .k{font-size:13px;color:var(--ink-2)}
+.tile .v{font-family:var(--f-display);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile.alert .v{color:var(--bad)}
+.breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.group{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.group h3{font-size:14px;font-weight:700;margin:0 0 8px}
+.brow{display:grid;grid-template-columns:minmax(0,7.5em) 1fr 2.2em;align-items:center;gap:8px;font-size:14px;padding:3px 0}
+.brow .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:10px;background:var(--panel);border-radius:2px;overflow:hidden}
+.fill{height:100%;background:var(--bar)}
+.brow .n{text-align:left;font-variant-numeric:tabular-nums;font-weight:700}
+.muted{font-size:13px;color:var(--ink-2)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+form{display:flex;flex-direction:column;gap:14px}
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:12px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+legend{font-weight:700;font-size:14px;padding:0 0 0 8px;color:var(--olive)}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2);min-width:0}
+input,select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:40px;width:100%}
+textarea{min-height:64px;resize:vertical}
+input.mono{font-family:var(--f-mono);direction:ltr;text-align:right;letter-spacing:.04em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.err{color:var(--bad);font-size:13px;margin:0}
+.ok-msg{color:var(--ok);font-size:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn{font:inherit;font-size:14px;font-weight:500;border-radius:6px;padding:8px 14px;min-height:38px;cursor:pointer;border:1px solid var(--olive);background:transparent;color:var(--olive);text-decoration:none;display:inline-flex;align-items:center}
+button:hover,.btn:hover{background:var(--panel)}
+button.primary{background:var(--olive);color:var(--on-olive)}
+button.primary:hover{background:var(--olive-hover)}
+button.small{padding:4px 10px;min-height:30px;font-size:13px}
+button.link{border:0;padding:0;min-height:0;text-decoration:underline;background:none}
+button.danger{border-color:var(--bad);color:var(--bad)}
+button.danger.armed{background:var(--bad);color:var(--paper)}
+button[disabled]{opacity:.6;cursor:wait}
+.findbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end;background:var(--panel);border-radius:8px;padding:12px;margin-bottom:12px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toolbar input{max-width:240px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+th{text-align:right;font-weight:700;font-size:13px;background:var(--panel);padding:8px 10px;white-space:nowrap}
+td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+.t{display:block}
+.sn{font-family:var(--f-mono);font-size:13px;color:var(--ink-2);direction:ltr;unicode-bidi:isolate}
+.dash{color:var(--ink-2)}
+.chip{display:inline-block;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:500;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.empty{padding:28px 16px;text-align:center;color:var(--ink-2)}
+.notes{max-width:220px;white-space:pre-wrap;overflow-wrap:anywhere}
+.adminbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.adminbar label{max-width:220px}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.item{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.item.on{border-color:var(--olive);background:var(--paper)}
+.item .chk{flex-direction:row;align-items:center;gap:8px;font-size:15px;color:var(--ink);font-weight:500;cursor:pointer}
+.item .chk input{width:20px;height:20px;min-height:0;margin:0;accent-color:var(--olive);flex:none}
+.item input.mono{min-height:34px;padding:5px 8px;font-size:14px}
+.gear{display:flex;flex-wrap:wrap;gap:4px;max-width:420px}
+.gear span{background:var(--panel);border-radius:4px;padding:1px 7px;font-size:13px;white-space:nowrap}
+.gear .sn{font-size:12px;margin-inline-start:4px}
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div>
+      <h1>צל״ם הצוות</h1>
+      <p class="sub">מה כל לוחם חתום עליו בנשקייה — כל הצוות במקום אחד</p>
+    </div>
+    <div class="stamp" id="stamp">לוחם</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="note" id="note" hidden></div>
+
+  <section aria-labelledby="sum-h">
+    <h2 id="sum-h">סיכום</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">לוחמים שמילאו</div><div class="v" id="k-sol">–</div></div>
+      <div class="tile"><div class="k">נשקים</div><div class="v" id="k-wpn">–</div></div>
+      <div class="tile"><div class="k">פריטים חתומים</div><div class="v" id="k-items">–</div></div>
+      <div class="tile" id="t-bad"><div class="k">בתיקון / חסר</div><div class="v" id="k-bad">–</div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="bd-h">
+    <h2 id="bd-h">כמה יש מכל פריט</h2>
+    <div class="breakdown" id="breakdown"><p class="muted">טוען…</p></div>
+  </section>
+
+  <section class="card" id="form-card" aria-labelledby="form-h">
+    <div class="card-head">
+      <h2 id="form-h">הפרטים שלי</h2>
+      <button type="button" class="link" id="logout" hidden>זה לא אני</button>
+    </div>
+    <form id="form" novalidate>
+      <fieldset>
+        <legend>פרטים</legend>
+        <label>שם מלא<input id="f-name" autocomplete="name" placeholder="ישראל ישראלי"></label>
+      </fieldset>
+      <fieldset>
+        <legend>נשק</legend>
+        <label>סוג נשק
+          <select id="f-wtype"><option value="">—</option><option>M4 / M16</option><option>נגב</option><option>מאג</option><option>אחר</option></select>
+        </label>
+        <label id="f-wother-l" hidden>איזה נשק<input id="f-wother" placeholder="שם הנשק"></label>
+        <label>צ׳ נשק (לא חובה)<input id="f-wserial" class="mono" autocomplete="off" placeholder="123456"></label>
+      </fieldset>
+      <fieldset style="display:block">
+        <legend>ציוד מהנשקייה</legend>
+        <p class="muted" style="margin:0 0 8px">מסמנים כל מה שחתום עליך. מספר צ׳ לא חובה.</p>
+        <div class="items" id="items"></div>
+      </fieldset>
+      <fieldset>
+        <legend>שונות</legend>
+        <label style="grid-column:1/-1">דברים נוספים שחתום עליהם<textarea id="f-misc" placeholder="פק״ל מקלען, פנס"></textarea></label>
+      </fieldset>
+      <fieldset>
+        <legend>מצב</legend>
+        <label>תקינות
+          <select id="f-status"><option>תקין</option><option>בתיקון</option><option>חסר</option></select>
+        </label>
+        <label style="grid-column:1/-1">הערות<textarea id="f-notes" placeholder="כוונת נשלחה לאיפוס, מחכה לחזרה"></textarea></label>
+      </fieldset>
+      <p class="muted" id="hint">רק השם חובה. ממלאים מה שיש לך, ומספר צ׳ אפשר להוסיף אחר כך. אפשר לעדכן את הפרטים בכל רגע מאותו טלפון. מטלפון אחר, פשוט ממלאים שוב עם אותו שם והשורה מתעדכנת.</p>
+      <p class="err" id="f-err" hidden></p>
+      <div class="actions">
+        <button type="submit" class="primary" id="save-btn">שמור</button>
+        <button type="button" id="cancel-btn" hidden>ביטול</button>
+        <span class="ok-msg" id="saved" hidden>נשמר</span>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="adm-h">
+    <h2 id="adm-h">כניסת סמל</h2>
+    <div class="adminbar" id="admin-login">
+      <label>קוד סמל<input id="admin-code" type="password" autocomplete="off"></label>
+      <button type="button" id="admin-btn">כניסה</button>
+      <p class="err" id="admin-err" hidden></p>
+    </div>
+    <div id="admin-area" hidden>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="חיפוש שם, פריט או מספר" aria-label="חיפוש">
+        <div class="actions">
+          <button type="button" id="new-btn">הוסף לוחם</button>
+          <button type="button" id="csv-btn">ייצוא לאקסל</button>
+          <a class="btn" id="sheet-link" target="_blank" rel="noopener" hidden>פתח את הגיליון</a>
+          <button type="button" id="admin-out">יציאה</button>
+        </div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th>שם</th><th>נשק</th><th>ציוד מהנשקייה</th><th>שונות</th><th>תקינות</th><th>הערות</th><th></th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+// הפריטים שאפשר לחתום עליהם בנשקייה (אותו סדר כמו בשרת ובגיליון)
+const ITEMS = [
+  ['m5','M5'], ['mt','מטול'], ['shaa','שח״ע'], ['mik','מיקרון'], ['adi','עדי'],
+  ['trij','טריג׳'], ['shm','שח״מ (4)'], ['amral','אמר״ל'], ['mag','מאג'], ['knsp','קנספ'],
+  ['mtl','מטלון'], ['zv','זאבון'], ['r710','קשר 710'], ['olr','אולר'], ['mgb','מגבר'],
+  ['bino','משקפת 10/50'], ['tzyn','ציין'], ['mtzp','מצפן']
+];
+const TITLE = Object.fromEntries(ITEMS);
+const WTYPES = ['M4 / M16', 'נגב', 'מאג'];
+const $ = id => document.getElementById(id);
+const S = {mineId:null, adminCode:null, rows:[], editId:null, q:'', summary:[]};
+
+/* ---------- חיבור לשרת ---------- */
+// כתובת ה-Web app של Apps Script. העמוד שולח אליה בקשות בלי עוגיות של Google,
+// ולכן הוא עובד גם בטלפונים שמחוברים לכמה חשבונות Google.
+// ?demo בסוף הכתובת פותח מצב הדגמה עם נתונים לדוגמה.
+const API_URL = 'https://script.google.com/macros/s/AKfycbz90CXkaIFEHFYmPkRJYKGUjl2lpZi8w5iuUEB8X4qdRGCqTaXyu9mHKsQhHx55sNqU/exec';
+const GAS = typeof google !== 'undefined' && google.script && google.script.run;
+const DEMO = !GAS && (!API_URL || /[?&]demo\b/.test(location.search));
+const LIVE = !DEMO;
+async function call(fn, ...args) {
+  if (GAS) return new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(e => rej(new Error(e && e.message ? e.message : String(e))))[fn](...args));
+  if (DEMO) { await new Promise(r => setTimeout(r, 250)); return MOCK[fn](...args); }
+  let r;
+  try { r = await fetch(API_URL, {method: 'POST', body: JSON.stringify({fn, args}), credentials: 'omit', redirect: 'follow'}); }
+  catch (e) { throw new Error('אין חיבור לשרת. בדוק את האינטרנט ונסה שוב.'); }
+  let j;
+  try { j = await r.json(); } catch (e) { throw new Error('השרת לא ענה כמו שצריך. נסה שוב בעוד רגע.'); }
+  if (!j.ok) throw new Error(j.error || 'משהו השתבש.');
+  return j.data;
+}
+const MOCK = (() => {
+  const db = [
+    {id:'d1', name:'כהן יואב', wtype:'M4 / M16', wserial:'4471203', items:{m5:{has:true, serial:'M5-22871'}, shm:{has:true, serial:'SH-301'}, olr:{has:true, serial:''}}, misc:'', status:'תקין', notes:''},
+    {id:'d2', name:'לוי עומר', wtype:'נגב', wserial:'N-88231', items:{trij:{has:true, serial:'TR-5520'}, r710:{has:true, serial:'710-44'}}, misc:'פק״ל מקלען', status:'בתיקון', notes:'כוונת באיפוס'},
+    {id:'d3', name:'מזרחי דן', wtype:'M4 / M16', wserial:'', items:{m5:{has:true, serial:''}, mt:{has:true, serial:'M203-7712'}, mtzp:{has:true, serial:''}}, misc:'', status:'תקין', notes:''}
+  ];
+  const copy = r => JSON.parse(JSON.stringify(r));
+  const norm = s => String(s || '').trim().replace(/\s+/g, ' ');
+  const put = rec => { let i = db.findIndex(r => r.id === rec.id); const id = i < 0 ? 'd' + Date.now() : db[i].id; const row = {...copy(rec), id}; if (i < 0) db.push(row); else db[i] = row; return {id}; };
+  return {
+    getSummary: () => db.map(r => ({status:r.status, wtype:r.wtype || (r.wserial ? 'לא צוין' : ''), items:Object.keys(r.items || {})})),
+    loadMine: id => { const r = db.find(r => r.id === id); if (!r) throw new Error('השורה לא נמצאה.'); return copy(r); },
+    saveMine: rec => { if (!rec.id) { const o = db.find(r => norm(r.name) === norm(rec.name)); if (o) rec = {...rec, id:o.id}; } return put(rec); },
+    adminList: code => { if (code !== 'demo') throw new Error('קוד סמל שגוי.'); return {rows: db.map(copy), sheetUrl: ''}; },
+    adminSave: (code, rec) => put(rec),
+    adminDelete: (code, id) => { const i = db.findIndex(r => r.id === id); if (i >= 0) db.splice(i, 1); return true; }
+  };
+})();
+
+/* ---------- טופס ---------- */
+for (const [k, t] of ITEMS) {
+  $('items').insertAdjacentHTML('beforeend',
+    `<div class="item" id="it-${k}">
+       <label class="chk"><input type="checkbox" id="${k}-has">${t}</label>
+       <input id="${k}-serial" class="mono" autocomplete="off" placeholder="צ׳ (לא חובה)" aria-label="צ׳ ${t}" hidden>
+     </div>`);
+  $(k + '-has').addEventListener('change', () => { syncItem(k); if ($(k + '-has').checked) $(k + '-serial').focus(); });
+}
+function syncItem(k) {
+  const on = $(k + '-has').checked;
+  $(k + '-serial').hidden = !on;
+  $('it-' + k).classList.toggle('on', on);
+}
+function syncW() { $('f-wother-l').hidden = $('f-wtype').value !== 'אחר'; }
+$('f-wtype').addEventListener('change', syncW);
+
+function readForm() {
+  const t = $('f-wtype').value;
+  const d = {name: $('f-name').value.trim(), status: $('f-status').value, notes: $('f-notes').value.trim(), misc: $('f-misc').value.trim(),
+    wtype: t === 'אחר' ? ($('f-wother').value.trim() || 'אחר') : t, wserial: $('f-wserial').value.trim(), items: {}};
+  for (const [k] of ITEMS) if ($(k + '-has').checked) d.items[k] = {has: true, serial: $(k + '-serial').value.trim()};
+  return d;
+}
+function fillForm(d) {
+  d = d || {};
+  $('f-name').value = d.name || '';
+  $('f-status').value = d.status || 'תקין';
+  $('f-notes').value = d.notes || '';
+  $('f-misc').value = d.misc || '';
+  const known = !d.wtype || WTYPES.includes(d.wtype);
+  $('f-wtype').value = known ? (d.wtype || '') : 'אחר';
+  $('f-wother').value = known ? '' : d.wtype;
+  $('f-wserial').value = d.wserial || '';
+  syncW();
+  const items = d.items || {};
+  for (const [k] of ITEMS) {
+    $(k + '-has').checked = !!items[k];
+    $(k + '-serial').value = items[k] ? items[k].serial || '' : '';
+    syncItem(k);
+  }
+}
+function validate(d) {
+  // רק השם חובה. כל השאר אפשר להשאיר ריק.
+  return d.name ? '' : 'חסר שם מלא.';
+}
+function err(id, m) { const e = $(id); e.textContent = m || ''; e.hidden = !m; }
+function note(m) { const n = $('note'); n.textContent = m || ''; n.hidden = !m; }
+$('form').addEventListener('input', () => { err('f-err'); $('saved').hidden = true; });
+
+function store(id) { try { id ? localStorage.setItem('tzalam-mine', id) : localStorage.removeItem('tzalam-mine'); } catch (e) {} }
+function stored() { try { return localStorage.getItem('tzalam-mine'); } catch (e) { return null; } }
+
+function soldierMode() {
+  S.editId = null;
+  $('form-h').textContent = 'הפרטים שלי';
+  $('cancel-btn').hidden = true;
+  $('hint').hidden = false;
+  $('logout').hidden = !S.mineId;
+}
+
+let busy = false;
+$('form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if (busy) return;
+  const d = readForm(); const m = validate(d);
+  if (m) return err('f-err', m);
+  busy = true; $('save-btn').disabled = true; $('save-btn').textContent = 'שומר…';
+  try {
+    if (S.editId !== null) {
+      d.id = S.editId || undefined;
+      await call('adminSave', S.adminCode, d);
+      await loadAdmin(); backToMine();
+    } else {
+      if (S.mineId) d.id = S.mineId;
+      const r = await call('saveMine', d);
+      S.mineId = r.id; store(r.id); soldierMode();
+      if (S.adminCode) loadAdmin();
+    }
+    $('saved').hidden = false;
+    loadSummary();
+  } catch (e) { err('f-err', e.message); }
+  finally { busy = false; $('save-btn').disabled = false; $('save-btn').textContent = 'שמור'; }
+});
+$('logout').addEventListener('click', () => { S.mineId = null; store(null); fillForm(null); soldierMode(); });
+
+/* ---------- סיכום ---------- */
+function bars(title, rows) {
+  const g = document.createElement('div'); g.className = 'group';
+  const h = document.createElement('h3'); h.textContent = title; g.append(h);
+  if (!rows.length) { const p = document.createElement('div'); p.className = 'muted'; p.textContent = 'עוד אין פריטים'; g.append(p); }
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  for (const [l, c] of rows) {
+    const r = document.createElement('div'); r.className = 'brow';
+    const a = document.createElement('span'); a.className = 'lbl'; a.textContent = l; a.title = l;
+    const t = document.createElement('div'); t.className = 'track';
+    const f = document.createElement('div'); f.className = 'fill'; f.style.width = (c / max * 100) + '%'; t.append(f);
+    const v = document.createElement('span'); v.className = 'n'; v.textContent = c;
+    r.append(a, t, v); g.append(r);
+  }
+  return g;
+}
+function renderSummary() {
+  const docs = S.summary;
+  const wt = new Map(), it = new Map();
+  for (const d of docs) {
+    if (d.wtype) wt.set(d.wtype, (wt.get(d.wtype) || 0) + 1);
+    for (const k of d.items || []) it.set(k, (it.get(k) || 0) + 1);
+  }
+  $('k-sol').textContent = docs.length;
+  $('k-wpn').textContent = [...wt.values()].reduce((a, b) => a + b, 0);
+  $('k-items').textContent = [...it.values()].reduce((a, b) => a + b, 0);
+  const bad = docs.filter(d => d.status && d.status !== 'תקין').length;
+  $('k-bad').textContent = bad;
+  $('t-bad').classList.toggle('alert', bad > 0);
+  const box = $('breakdown'); box.textContent = '';
+  box.append(bars('נשקים לפי סוג', [...wt.entries()].sort((a, b) => b[1] - a[1])));
+  // הציוד מוצג לפי הסדר של הנשקייה, רק פריטים שמישהו חתום עליהם
+  const gear = ITEMS.filter(([k]) => it.get(k)).map(([k, t]) => [t, it.get(k)]);
+  const half = Math.ceil(gear.length / 2);
+  box.append(bars('ציוד מהנשקייה', gear.slice(0, half)));
+  if (gear.length > 1) box.append(bars('ציוד מהנשקייה (המשך)', gear.slice(half)));
+}
+async function loadSummary() {
+  try { S.summary = await call('getSummary'); renderSummary(); }
+  catch (e) { note('לא הצלחתי לטעון את הסיכום. רענן את העמוד.'); }
+}
+
+/* ---------- סמל ---------- */
+function weaponCell(d) {
+  const td = document.createElement('td');
+  if (!d.wtype && !d.wserial) { td.innerHTML = '<span class="dash">—</span>'; return td; }
+  const a = document.createElement('span'); a.className = 't'; a.textContent = d.wtype || 'נשק';
+  const b = document.createElement('span'); b.className = 'sn'; b.textContent = d.wserial || '';
+  td.append(a, b); return td;
+}
+function gearCell(d) {
+  const td = document.createElement('td');
+  const items = d.items || {};
+  const keys = ITEMS.map(([k]) => k).filter(k => items[k]);
+  if (!keys.length) { td.innerHTML = '<span class="dash">—</span>'; return td; }
+  const box = document.createElement('div'); box.className = 'gear';
+  for (const k of keys) {
+    const s = document.createElement('span'); s.textContent = TITLE[k];
+    if (items[k].serial) { const n = document.createElement('span'); n.className = 'sn'; n.style.background = 'none'; n.style.padding = '0'; n.textContent = items[k].serial; s.append(n); }
+    box.append(s);
+  }
+  td.append(box); return td;
+}
+function renderTable() {
+  const tb = $('tbody'); tb.textContent = '';
+  const q = S.q.trim().toLowerCase();
+  const hay = d => [d.name, d.misc, d.wtype, d.wserial, ...Object.entries(d.items || {}).flatMap(([k, v]) => [TITLE[k], v.serial])];
+  const rows = S.rows.filter(d => !q || hay(d).some(v => (v || '').toLowerCase().includes(q)))
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'));
+  if (!rows.length) {
+    const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 7; td.className = 'empty';
+    td.textContent = q ? 'אין תוצאות לחיפוש הזה.' : 'עוד אף אחד לא מילא. שלח לצוות את הקישור.';
+    tr.append(td); tb.append(tr); return;
+  }
+  for (const d of rows) {
+    const tr = document.createElement('tr');
+    const nm = document.createElement('td'); nm.textContent = d.name || 'ללא שם';
+    const mi = document.createElement('td'); mi.className = 'notes'; mi.textContent = d.misc || '';
+    const st = document.createElement('td'); const ch = document.createElement('span');
+    const s = d.status || 'תקין'; ch.className = 'chip ' + (s === 'תקין' ? 'ok' : s === 'בתיקון' ? 'warn' : 'bad'); ch.textContent = s; st.append(ch);
+    const no = document.createElement('td'); no.className = 'notes'; no.textContent = d.notes || '';
+    const ac = document.createElement('td'); ac.style.whiteSpace = 'nowrap';
+    const e = document.createElement('button'); e.type = 'button'; e.className = 'small'; e.textContent = 'ערוך';
+    e.addEventListener('click', () => adminEdit(d));
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'small danger'; x.textContent = 'מחק'; x.style.marginInlineStart = '6px';
+    let t = null;
+    x.addEventListener('click', async () => {
+      if (!x.classList.contains('armed')) { x.classList.add('armed'); x.textContent = 'בטוח? מחק'; t = setTimeout(() => { x.classList.remove('armed'); x.textContent = 'מחק'; }, 4000); return; }
+      clearTimeout(t); x.disabled = true;
+      try { await call('adminDelete', S.adminCode, d.id); if (S.mineId === d.id) { S.mineId = null; store(null); } await loadAdmin(); loadSummary(); }
+      catch (er) { x.disabled = false; x.textContent = 'המחיקה נכשלה'; }
+    });
+    ac.append(e, x);
+    tr.append(nm, weaponCell(d), gearCell(d), mi, st, no, ac);
+    tb.append(tr);
+  }
+}
+function adminEdit(d) {
+  S.editId = d ? d.id : '';
+  fillForm(d);
+  $('form-h').textContent = d ? 'עריכת ' + (d.name || 'לוחם') : 'לוחם חדש';
+  $('hint').hidden = true; $('logout').hidden = true;
+  $('cancel-btn').hidden = false; err('f-err'); $('saved').hidden = true;
+  $('form-card').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+function backToMine() {
+  if (S.mineId) call('loadMine', S.mineId).then(r => fillForm(r)).catch(() => fillForm(null)); else fillForm(null);
+  soldierMode();
+}
+$('cancel-btn').addEventListener('click', backToMine);
+$('new-btn').addEventListener('click', () => adminEdit(null));
+$('search').addEventListener('input', e => { S.q = e.target.value; renderTable(); });
+
+async function loadAdmin() {
+  const r = await call('adminList', S.adminCode);
+  S.rows = r.rows;
+  if (r.sheetUrl) { $('sheet-link').href = r.sheetUrl; $('sheet-link').hidden = false; }
+  renderTable();
+}
+$('admin-btn').addEventListener('click', async () => {
+  const c = $('admin-code').value;
+  if (!c) return err('admin-err', 'הכנס קוד סמל.');
+  err('admin-err'); $('admin-btn').disabled = true;
+  S.adminCode = c;
+  try { await loadAdmin(); $('admin-login').hidden = true; $('admin-area').hidden = false; $('stamp').textContent = 'סמל · עריכה מלאה'; }
+  catch (e) { S.adminCode = null; err('admin-err', e.message); }
+  finally { $('admin-btn').disabled = false; }
+});
+$('admin-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('admin-btn').click(); });
+$('admin-out').addEventListener('click', () => {
+  S.adminCode = null; S.rows = []; $('admin-code').value = ''; $('tbody').textContent = '';
+  $('admin-area').hidden = true; $('admin-login').hidden = false; $('stamp').textContent = 'לוחם';
+  if (S.editId !== null) backToMine();
+});
+
+// הייצוא בנוי כמו הטופס של הנשקייה: עמודה לכל פריט, ובה מספר הצ׳ או "יש"
+function csvCell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+$('csv-btn').addEventListener('click', () => {
+  const head = ['שם', 'סוג נשק', 'צ׳ נשק', ...ITEMS.map(([, t]) => t), 'שונות', 'תקינות', 'הערות'];
+  const cell = it => it ? (it.serial || 'יש') : '';
+  const lines = [head, ...[...S.rows].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'))
+    .map(d => [d.name, d.wtype, d.wserial, ...ITEMS.map(([k]) => cell((d.items || {})[k])), d.misc, d.status || 'תקין', d.notes])];
+  const blob = new Blob(['﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n')], {type: 'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'tzalam-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+/* ---------- התחלה ---------- */
+(async function start() {
+  if (!LIVE) note('מצב הדגמה: הנתונים כאן לדוגמה ולא נשמרים. קוד סמל להדגמה: demo');
+  fillForm(null);
+  soldierMode();
+  loadSummary();
+  const id = stored();
+  if (id) {
+    try { fillForm(await call('loadMine', id)); S.mineId = id; soldierMode(); }
+    catch (e) { store(null); }
+  }
+})();
+</script>
+</body>
+</html>
