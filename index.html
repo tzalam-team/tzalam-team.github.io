@@ -54,6 +54,13 @@ textarea{min-height:64px;resize:vertical}
 input.mono{font-family:var(--f-mono);direction:ltr;text-align:right;letter-spacing:.04em}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .err{color:var(--bad);font-size:13px;margin:0}
+.paste{margin-bottom:12px;display:flex;flex-direction:column;gap:10px}
+.paste h3{margin:0;font-size:16px}
+.paste .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.paste .row label{max-width:280px;flex:1}
+.paste td input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--olive)}
+.paste .src{color:var(--ink-2);font-size:13px}
+.paste .unk{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:14px}
 .ok-msg{color:var(--ok);font-size:14px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button,.btn{font:inherit;font-size:14px;font-weight:500;border-radius:6px;padding:8px 14px;min-height:38px;cursor:pointer;border:1px solid var(--olive);background:transparent;color:var(--olive);text-decoration:none;display:inline-flex;align-items:center}
@@ -237,10 +244,38 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
       <div class="toolbar">
         <input id="search" type="search" placeholder="חיפוש שם, פריט או מספר" aria-label="חיפוש">
         <div class="actions">
+          <button type="button" id="paste-btn" class="primary">הדבק הודעת חתימה</button>
           <button type="button" id="new-btn">הוסף לוחם</button>
           <button type="button" id="csv-btn">ייצוא לאקסל</button>
           <a class="btn" id="sheet-link" target="_blank" rel="noopener" hidden>פתח את הגיליון</a>
           <button type="button" id="admin-out">יציאה</button>
+        </div>
+      </div>
+      <div class="card paste" id="paste-box" hidden>
+        <h3>הודעת חתימה מהנשקייה או מהאפסנאות</h3>
+        <p class="muted">מדביקים הודעה של לוחם אחד. האתר מזהה את השם ואת הפריטים ומסמן אותם כ"חתום". לפני השמירה רואים מה הוא הבין, ואפשר לבטל שורות.</p>
+        <textarea id="paste-text" rows="8" placeholder="הדבק כאן את ההודעה"></textarea>
+        <div class="row">
+          <button type="button" id="paste-parse" class="primary">זהה</button>
+          <button type="button" id="paste-close">סגור</button>
+          <span class="ok-msg" id="paste-ok" hidden></span>
+        </div>
+        <div id="paste-result" hidden>
+          <div class="row">
+            <label>שייך ללוחם<select id="paste-who"></select></label>
+            <label id="paste-new" hidden>שם הלוחם החדש<input id="paste-name"></label>
+          </div>
+          <div class="tablebox" style="margin-top:10px">
+            <table>
+              <thead><tr><th>לשמור</th><th>פריט</th><th>יישמר כ</th><th>עכשיו בגיליון</th><th>השורה בהודעה</th></tr></thead>
+              <tbody id="paste-rows"></tbody>
+            </table>
+          </div>
+          <div class="unk" id="paste-unk" hidden></div>
+          <div class="row" style="margin-top:10px">
+            <button type="button" id="paste-save" class="primary">שמור ללוחם</button>
+          </div>
+          <p class="err" id="paste-err" hidden></p>
         </div>
       </div>
       <div class="tablebox">
@@ -673,6 +708,147 @@ $('csv-btn').addEventListener('click', () => {
   a.download = (S.tab === 'log' ? 'afsanaut-' : 'tzalam-') + new Date().toISOString().slice(0, 10) + '.csv';
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+/* ---------- הדבקת הודעת חתימה ---------- */
+// מזהה פריטים בהודעה שהנשקייה או האפסנאות שולחות ללוחם, וממלא אותם כ"חתום".
+// מילים נרדפות לכל פריט. ההשוואה מתעלמת מגרשיים, מרווחים כפולים ומ-וו/יי.
+const SYN = {
+  // אפסנאות
+  uni: ['מדים', 'מדי ב', 'מדי א', 'חולצת ב', 'מכנסי ב'], hlf: ['חלפס', 'חליפת לחימה'], hrm: ['חרמונית', 'חרמון'],
+  plc: ['פלציב', 'פלצב'], lao: ['תיק לאו', 'לאו'], shl: ['שלוקר', 'מיכל מים'], sks: ['שקש', 'שק שינה'],
+  vst: ['וסט', 'אפוד'], krm: ['קרמי', 'קרמיקה', 'לוח קרמי'], ksd: ['קסדה'], brk: ['ברכיות', 'מגני ברכיים'],
+  mgn: ['משקפי מגן', 'משקפי'], mhs: ['מחסניות', 'מחסנית'],
+  // נשקייה
+  m5: ['M5'], mt: ['מטול', 'M203'], shaa: ['שחע'], mik: ['מיקרון'], adi: ['עדי'], trij: ['טריג', 'טריגיקון', 'ACOG'],
+  shm: ['שחמ'], amral: ['אמרל'], mag: ['מאג', 'MAG'], knsp: ['קנספ'], mtl: ['מטלון'], zv: ['זאבון'],
+  r710: ['קשר 710', '710'], olr: ['אולר'], mgb: ['מגבר'], bino: ['משקפת 10/50', 'משקפת'], tzyn: ['ציין'], mtzp: ['מצפן']
+};
+const WEAPON_SYN = [['M4 / M16', ['M4', 'M16', 'M4A1']], ['נגב', ['נגב']], ['', ['צ נשק', 'נשק אישי', 'נשק', 'רובה']]];
+const pnorm = t => String(t || '').replace(/[֑-ׇ]/g, '').replace(/["'׳״`]/g, '').replace(/וו/g, 'ו').replace(/יי/g, 'י').replace(/\s+/g, ' ').trim().toLowerCase();
+const LOGKEYS = new Set(LOG.map(([k]) => k));
+// כל המילים מכל הפריטים, הארוכות קודם (כדי ש"משקפי מגן" ינצח את "משקפי")
+const KW = Object.entries(SYN).flatMap(([k, ws]) => ws.map(w => [k, pnorm(w)])).sort((a, b) => b[1].length - a[1].length);
+function findKw(line) {
+  for (const [k, w] of KW) {
+    const i = line.indexOf(w); if (i < 0) continue;
+    // מילים קצרות חייבות לעמוד לבד, כדי ש"לאו" לא יתפוס בתוך "לאומי"
+    if (w.length < 4) { const b = line[i - 1], a = line[i + w.length]; const L = /[a-z0-9א-ת]/; if ((b && L.test(b)) || (a && L.test(a))) continue; }
+    return {k, w};
+  }
+  return null;
+}
+function serialOf(rest) {
+  const m = rest.match(/[a-z0-9][a-z0-9\-\/]{2,}/gi) || [];
+  return (m.find(t => (t.match(/\d/g) || []).length >= 4) || '').toUpperCase();
+}
+function qtyOf(rest) {
+  const m = rest.match(/(\d+)\s*(יחידות|יח|יח\.)/) || rest.match(/[:x×]\s*(\d+)\s*$/) || rest.match(/^\s*(\d+)\s*$/);
+  return m ? m[1] : '';
+}
+function parseSignMsg(text) {
+  const out = {name: '', found: [], unknown: []};
+  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (const raw of lines) {
+    const g = raw.match(/^(?:היי|הי|שלום|אהלן|הלו)[\s,!:]+(.+?)[\s,!.]*$/);
+    if (g && !out.name) { out.name = g[1].trim(); continue; }
+    const bullet = /^\s*([•·\-*–▪●]|\d+[.)])/.test(raw);
+    const line = pnorm(raw.replace(/^\s*([•·\-*–▪●]|\d+[.)])\s*/, ''));
+    const hit = findKw(line);
+    if (hit) {
+      const rest = line.replace(hit.w, ' ');
+      if (LOGKEYS.has(hit.k)) {
+        const q = LOG.find(([k]) => k === hit.k)[2] ? qtyOf(rest) : '';
+        out.found.push({grp: 'log', k: hit.k, title: LTITLE[hit.k], raw, val: {st: 'have', src: 'signed', qty: q}});
+      } else {
+        out.found.push({grp: 'arm', k: hit.k, title: TITLE[hit.k], raw, val: {has: true, serial: serialOf(rest)}});
+      }
+      continue;
+    }
+    const wp = WEAPON_SYN.find(([, ws]) => ws.some(w => line.includes(pnorm(w))));
+    if (wp && serialOf(line)) { out.found.push({grp: 'wpn', k: 'wpn', title: 'נשק אישי', raw, val: {wtype: wp[0], wserial: serialOf(line)}}); continue; }
+    if (bullet) out.unknown.push(raw.replace(/^\s*([•·\-*–▪●]|\d+[.)])\s*/, ''));
+  }
+  return out;
+}
+const fmtArm = v => v && v.has ? (v.serial ? 'צ׳ ' + v.serial : 'יש') : '';
+const fmtLogV = v => !v ? '' : [ST[v.st], v.st === 'have' ? SRC[v.src] : '', v.qty ? '(' + v.qty + ')' : ''].filter(Boolean).join(' ');
+const fmtWpn = d => d ? [d.wtype, d.wserial ? 'צ׳ ' + d.wserial : ''].filter(Boolean).join(' ') : '';
+const P = {res: null};
+function pasteWhoChanged() {
+  const id = $('paste-who').value;
+  $('paste-new').hidden = id !== '__new';
+  const d = S.rows.find(r => r.id === id) || null;
+  const tb = $('paste-rows'); tb.textContent = '';
+  P.res.found.forEach((f, i) => {
+    const now = f.grp === 'log' ? fmtLogV((d && d.log || {})[f.k]) : f.grp === 'arm' ? fmtArm((d && d.items || {})[f.k]) : fmtWpn(d);
+    const will = f.grp === 'log' ? fmtLogV(f.val) : f.grp === 'arm' ? fmtArm(f.val) : fmtWpn(f.val);
+    const tr = document.createElement('tr');
+    const c0 = document.createElement('td'); const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = true; cb.dataset.i = i; cb.setAttribute('aria-label', 'לשמור ' + f.title); c0.append(cb);
+    tr.append(c0);
+    [f.title + (f.grp === 'log' ? ' · אפסנאות' : ' · נשקייה'), will, now || '—', f.raw].forEach((v, j) => { const td = document.createElement('td'); td.textContent = v; if (j === 3) td.className = 'src'; tr.append(td); });
+    tb.append(tr);
+  });
+  if (!P.res.found.length) tb.innerHTML = '<tr><td colspan="5" class="muted">לא זיהיתי אף פריט מהרשימה.</td></tr>';
+}
+$('paste-btn').addEventListener('click', () => { $('paste-box').hidden = false; $('paste-text').focus(); });
+$('paste-close').addEventListener('click', () => { $('paste-box').hidden = true; $('paste-result').hidden = true; $('paste-text').value = ''; });
+$('paste-parse').addEventListener('click', () => {
+  err('paste-err'); $('paste-ok').hidden = true;
+  const res = P.res = parseSignMsg($('paste-text').value);
+  if (!res.found.length && !res.unknown.length) return err('paste-err', 'לא מצאתי פריטים בהודעה. בדוק שהדבקת את כל ההודעה.');
+  // התאמת שם: קודם בדיוק, אחר כך אותן מילים בסדר אחר, ואחר כך שם שמוכל בשם השני
+  const words = n => pnorm(n).split(' ').filter(Boolean);
+  const want = words(res.name);
+  const same = (a, b) => a.length && a.length === b.length && a.every(w => b.includes(w));
+  const part = (a, b) => a.length && b.length && (a.every(w => b.includes(w)) || b.every(w => a.includes(w)));
+  const match = want.length ? (S.rows.find(r => same(words(r.name), want)) || S.rows.find(r => part(words(r.name), want))) : null;
+  const sel = $('paste-who'); sel.textContent = '';
+  const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); };
+  if (!match) add('', '— בחר לוחם —');
+  [...S.rows].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he')).forEach(r => add(r.id, r.name));
+  add('__new', '+ לוחם חדש' + (res.name ? ': ' + res.name : ''));
+  sel.value = match ? match.id : (res.name ? '__new' : '');
+  $('paste-name').value = res.name;
+  const unk = $('paste-unk');
+  unk.hidden = !res.unknown.length;
+  unk.textContent = '';
+  if (res.unknown.length) {
+    const l = document.createElement('label'); l.style.flexDirection = 'row'; l.style.alignItems = 'center'; l.style.color = 'inherit';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'paste-unk-add'; cb.checked = true; cb.style.width = '20px'; cb.style.minHeight = '0';
+    l.append(cb, ' לא זיהיתי: ' + res.unknown.join(', ') + '. להוסיף את זה ל"הערות"?');
+    unk.append(l);
+  }
+  $('paste-result').hidden = false;
+  pasteWhoChanged();
+});
+$('paste-who').addEventListener('change', pasteWhoChanged);
+$('paste-save').addEventListener('click', async () => {
+  err('paste-err'); $('paste-ok').hidden = true;
+  const id = $('paste-who').value;
+  if (!id) return err('paste-err', 'בחר לאיזה לוחם שייכת ההודעה.');
+  const name = id === '__new' ? $('paste-name').value.trim() : '';
+  if (id === '__new' && !name) return err('paste-err', 'כתוב את שם הלוחם החדש.');
+  const base = id === '__new' ? {name, wtype: '', wserial: '', items: {}, misc: '', status: 'תקין', notes: '', log: {}} : JSON.parse(JSON.stringify(S.rows.find(r => r.id === id)));
+  base.items = base.items || {}; base.log = base.log || {};
+  const picked = [...document.querySelectorAll('#paste-rows input[type=checkbox]')].filter(c => c.checked).map(c => P.res.found[+c.dataset.i]);
+  for (const f of picked) {
+    if (f.grp === 'log') base.log[f.k] = {...f.val};
+    else if (f.grp === 'arm') base.items[f.k] = {has: true, serial: f.val.serial || ((base.items[f.k] || {}).serial || '')};
+    else { if (f.val.wtype) base.wtype = f.val.wtype; base.wserial = f.val.wserial; }
+  }
+  const addUnk = $('paste-unk-add');
+  if (addUnk && addUnk.checked && P.res.unknown.length) base.notes = [base.notes, 'חתום גם: ' + P.res.unknown.join(', ')].filter(Boolean).join(' | ');
+  if (!picked.length && !(addUnk && addUnk.checked)) return err('paste-err', 'לא סומן אף פריט לשמירה.');
+  $('paste-save').disabled = true;
+  try {
+    await call('adminSave', S.adminCode, base);
+    await loadAdmin(); loadSummary();
+    $('paste-ok').textContent = 'נשמר ל' + base.name + ' (' + picked.length + ' פריטים).';
+    $('paste-ok').hidden = false;
+    $('paste-text').value = ''; $('paste-result').hidden = true; $('paste-ok').hidden = false;
+  } catch (e) { err('paste-err', e.message); }
+  finally { $('paste-save').disabled = false; }
 });
 
 /* ---------- לשוניות ---------- */
