@@ -153,8 +153,8 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
     <div class="breakdown" id="breakdown"><p class="muted">טוען…</p></div>
   </section>
 
-  <section class="t-log" aria-labelledby="lsum-h" hidden>
-    <h2 id="lsum-h">סיכום אפסנאות</h2>
+  <section class="t-log adm" aria-labelledby="lsum-h" hidden>
+    <h2 id="lsum-h">סיכום אפסנאות (רק לסמל)</h2>
     <div class="tiles">
       <div class="tile"><div class="k">לוחמים שמילאו</div><div class="v" id="l-sol">–</div></div>
       <div class="tile" id="lt-need"><div class="k">פריטים שצריך להשיג</div><div class="v" id="l-need">–</div></div>
@@ -162,7 +162,7 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
     </div>
   </section>
 
-  <section class="t-log" aria-labelledby="lbd-h" hidden>
+  <section class="t-log adm" aria-labelledby="lbd-h" hidden>
     <h2 id="lbd-h">מה יש ומה צריך</h2>
     <div class="tablebox">
       <table class="ltable">
@@ -304,7 +304,7 @@ const MOCK = (() => {
   const norm = s => String(s || '').trim().replace(/\s+/g, ' ');
   const put = rec => { let i = db.findIndex(r => r.id === rec.id); const id = i < 0 ? 'd' + Date.now() : db[i].id; const row = {...copy(rec), id}; if (i < 0) db.push(row); else db[i] = row; return {id}; };
   return {
-    getSummary: () => db.map(r => ({status:r.status, wtype:r.wtype || (r.wserial ? 'לא צוין' : ''), items:Object.keys(r.items || {}), log:copy(r.log || {})})),
+    getSummary: () => db.map(r => ({status:r.status, wtype:r.wtype || (r.wserial ? 'לא צוין' : ''), items:Object.keys(r.items || {})})),
     loadByName: name => { const r = db.find(r => norm(r.name) === norm(name)); return r ? copy(r) : null; },
     loadMine: id => { const r = db.find(r => r.id === id); if (!r) throw new Error('השורה לא נמצאה.'); return copy(r); },
     saveMine: rec => { if (!rec.id) { const o = db.find(r => norm(r.name) === norm(rec.name)); if (o) rec = {...rec, id:o.id}; } return put(rec); },
@@ -511,8 +511,9 @@ function renderSummary() {
   box.append(bars('ציוד מהנשקייה', gear.slice(0, half)));
   if (gear.length > 1) box.append(bars('ציוד מהנשקייה (המשך)', gear.slice(half)));
 }
+// הסיכום של האפסנאות מוצג רק לסמל, ומחושב מהטבלה המלאה שנטענת עם הקוד
 function renderLogSummary() {
-  const docs = S.summary;
+  const docs = S.rows;
   const tb = $('lbody'); tb.textContent = '';
   let needAll = 0, mhs = 0, filled = 0;
   for (const d of docs) if (d.log && Object.keys(d.log).length) filled++;
@@ -535,7 +536,7 @@ function renderLogSummary() {
   $('lt-need').classList.toggle('alert', needAll > 0);
 }
 async function loadSummary() {
-  try { S.summary = await call('getSummary'); renderSummary(); renderLogSummary(); }
+  try { S.summary = await call('getSummary'); renderSummary(); }
   catch (e) { note('לא הצלחתי לטעון את הסיכום. רענן את העמוד.'); }
 }
 
@@ -637,6 +638,7 @@ $('search').addEventListener('input', e => { S.q = e.target.value; renderTable()
 async function loadAdmin() {
   const r = await call('adminList', S.adminCode);
   S.rows = r.rows;
+  renderLogSummary(); showTab();
   if (r.sheetUrl) { $('sheet-link').href = r.sheetUrl; $('sheet-link').hidden = false; }
   renderTable();
 }
@@ -651,7 +653,7 @@ $('admin-btn').addEventListener('click', async () => {
 });
 $('admin-code').addEventListener('keydown', e => { if (e.key === 'Enter') $('admin-btn').click(); });
 $('admin-out').addEventListener('click', () => {
-  S.adminCode = null; S.rows = []; $('admin-code').value = ''; $('tbody').textContent = '';
+  S.adminCode = null; S.rows = []; $('admin-code').value = ''; $('tbody').textContent = ''; showTab();
   $('admin-area').hidden = true; $('admin-login').hidden = false; $('stamp').textContent = 'לוחם';
   if (S.editId !== null) backToMine();
 });
@@ -674,10 +676,13 @@ $('csv-btn').addEventListener('click', () => {
 });
 
 /* ---------- לשוניות ---------- */
+function showTab() {
+  document.querySelectorAll('.t-log').forEach(e => e.hidden = S.tab !== 'log' || (e.classList.contains('adm') && !S.adminCode));
+}
 function setTab(t) {
   S.tab = t === 'log' ? 'log' : 'arm';
   document.querySelectorAll('.t-arm').forEach(e => e.hidden = S.tab !== 'arm');
-  document.querySelectorAll('.t-log').forEach(e => e.hidden = S.tab !== 'log');
+  showTab();
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
   $('form-h').dataset.tab = S.tab;
   // שומר את הלשונית בכתובת, כדי שאפשר יהיה לשלוח קישור ישר לאפסנאות (#log)
