@@ -90,6 +90,33 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
 .gear{display:flex;flex-wrap:wrap;gap:4px;max-width:420px}
 .gear span{background:var(--panel);border-radius:4px;padding:1px 7px;font-size:13px;white-space:nowrap}
 .gear .sn{font-size:12px;margin-inline-start:4px}
+.gear .need{background:var(--warn-bg);color:var(--warn)}
+.tabs{display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:10px;position:sticky;top:0;z-index:5}
+.tabs button{flex:1;border:0;min-height:42px;font-size:16px;color:var(--ink-2);background:transparent;justify-content:center}
+.tabs button:hover{background:var(--bg)}
+.tabs button[aria-selected="true"]{background:var(--paper);color:var(--olive);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.lrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:9px 0;border-top:1px solid var(--line)}
+.lrow:first-child{border-top:0}
+.lrow .nm{font-weight:500;min-width:6.5em}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg label{flex-direction:row;gap:0;min-width:0;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;min-height:0}
+.seg span{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px;color:var(--ink);background:var(--bg);white-space:nowrap}
+.seg input:checked+span{background:var(--olive);color:var(--on-olive);border-color:var(--olive)}
+.seg input.need:checked+span{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.seg input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+.seg.small span{padding:3px 10px;font-size:13px}
+.lsub{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%;padding-inline-start:6.5em}
+@media (max-width:520px){.lsub{padding-inline-start:0}}
+.lsub label.q{flex-direction:row;align-items:center;gap:6px}
+.lsub input.qty{width:5.5em;min-height:32px;padding:4px 8px}
+.namerow{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.namerow label{flex:1;min-width:200px}
+.offer{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:8px 12px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ltable{width:100%;min-width:0;font-size:14px}
+.ltable td,.ltable th{padding:6px 10px}
+.ltable .num{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.ltable .need{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -106,7 +133,12 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
 <main class="wrap">
   <div class="note" id="note" hidden></div>
 
-  <section aria-labelledby="sum-h">
+  <nav class="tabs" role="tablist" aria-label="חלקים באתר">
+    <button type="button" role="tab" id="tab-arm" data-tab="arm" aria-selected="true">נשקייה</button>
+    <button type="button" role="tab" id="tab-log" data-tab="log" aria-selected="false">אפסנאות</button>
+  </nav>
+
+  <section class="t-arm" aria-labelledby="sum-h">
     <h2 id="sum-h">סיכום</h2>
     <div class="tiles">
       <div class="tile"><div class="k">לוחמים שמילאו</div><div class="v" id="k-sol">–</div></div>
@@ -116,9 +148,28 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
     </div>
   </section>
 
-  <section aria-labelledby="bd-h">
+  <section class="t-arm" aria-labelledby="bd-h">
     <h2 id="bd-h">כמה יש מכל פריט</h2>
     <div class="breakdown" id="breakdown"><p class="muted">טוען…</p></div>
+  </section>
+
+  <section class="t-log" aria-labelledby="lsum-h" hidden>
+    <h2 id="lsum-h">סיכום אפסנאות</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">לוחמים שמילאו</div><div class="v" id="l-sol">–</div></div>
+      <div class="tile" id="lt-need"><div class="k">פריטים שצריך להשיג</div><div class="v" id="l-need">–</div></div>
+      <div class="tile"><div class="k">מחסניות שצריך</div><div class="v" id="l-mhs">–</div></div>
+    </div>
+  </section>
+
+  <section class="t-log" aria-labelledby="lbd-h" hidden>
+    <h2 id="lbd-h">מה יש ומה צריך</h2>
+    <div class="tablebox">
+      <table class="ltable">
+        <thead><tr><th>פריט</th><th class="num">יש</th><th class="num">מהבית</th><th class="num">חתום</th><th class="num">צריך</th></tr></thead>
+        <tbody id="lbody"><tr><td colspan="5" class="muted">טוען…</td></tr></tbody>
+      </table>
+    </div>
   </section>
 
   <section class="card" id="form-card" aria-labelledby="form-h">
@@ -127,11 +178,16 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
       <button type="button" class="link" id="logout" hidden>זה לא אני</button>
     </div>
     <form id="form" novalidate>
-      <fieldset>
+      <fieldset style="display:block">
         <legend>פרטים</legend>
-        <label>שם מלא<input id="f-name" autocomplete="name" placeholder="ישראל ישראלי"></label>
+        <div class="namerow">
+          <label>שם מלא<input id="f-name" autocomplete="name" placeholder="ישראל ישראלי"></label>
+          <button type="button" id="load-btn">טען את הפרטים שלי</button>
+        </div>
+        <p class="muted" style="margin:6px 0 0">כבר מילאת? כתוב את השם שלך בדיוק כמו בפעם הקודמת והפרטים ייטענו לעריכה.</p>
+        <div class="offer" id="offer" hidden></div>
       </fieldset>
-      <fieldset>
+      <fieldset class="t-arm">
         <legend>נשק</legend>
         <label>סוג נשק
           <select id="f-wtype"><option value="">—</option><option>M4 / M16</option><option>נגב</option><option>מאג</option><option>אחר</option></select>
@@ -139,23 +195,28 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
         <label id="f-wother-l" hidden>איזה נשק<input id="f-wother" placeholder="שם הנשק"></label>
         <label>צ׳ נשק (לא חובה)<input id="f-wserial" class="mono" autocomplete="off" placeholder="123456"></label>
       </fieldset>
-      <fieldset style="display:block">
+      <fieldset class="t-arm" style="display:block">
         <legend>ציוד מהנשקייה</legend>
         <p class="muted" style="margin:0 0 8px">מסמנים כל מה שחתום עליך. מספר צ׳ לא חובה.</p>
         <div class="items" id="items"></div>
       </fieldset>
-      <fieldset>
+      <fieldset class="t-arm">
         <legend>שונות</legend>
         <label style="grid-column:1/-1">דברים נוספים שחתום עליהם<textarea id="f-misc" placeholder="פק״ל מקלען, פנס"></textarea></label>
       </fieldset>
-      <fieldset>
+      <fieldset class="t-log" style="display:block" hidden>
+        <legend>אפסנאות</legend>
+        <p class="muted" style="margin:0 0 4px">לכל פריט: יש לי, אני צריך או לא צריך. אם יש לך, סמן אם זה מהבית או שחתמת עליו.</p>
+        <div id="logitems"></div>
+      </fieldset>
+      <fieldset class="t-arm">
         <legend>מצב</legend>
         <label>תקינות
           <select id="f-status"><option>תקין</option><option>בתיקון</option><option>חסר</option></select>
         </label>
         <label style="grid-column:1/-1">הערות<textarea id="f-notes" placeholder="כוונת נשלחה לאיפוס, מחכה לחזרה"></textarea></label>
       </fieldset>
-      <p class="muted" id="hint">רק השם חובה. ממלאים מה שיש לך, ומספר צ׳ אפשר להוסיף אחר כך. אפשר לעדכן את הפרטים בכל רגע מאותו טלפון. מטלפון אחר, פשוט ממלאים שוב עם אותו שם והשורה מתעדכנת.</p>
+      <p class="muted" id="hint">רק השם חובה. ממלאים מה שיש, ואפשר לחזור ולעדכן בכל רגע. השמירה שומרת גם את הנשקייה וגם את האפסנאות.</p>
       <p class="err" id="f-err" hidden></p>
       <div class="actions">
         <button type="submit" class="primary" id="save-btn">שמור</button>
@@ -184,7 +245,7 @@ td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
       </div>
       <div class="tablebox">
         <table>
-          <thead><tr><th>שם</th><th>נשק</th><th>ציוד מהנשקייה</th><th>שונות</th><th>תקינות</th><th>הערות</th><th></th></tr></thead>
+          <thead id="thead"></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -201,9 +262,18 @@ const ITEMS = [
   ['bino','משקפת 10/50'], ['tzyn','ציין'], ['mtzp','מצפן']
 ];
 const TITLE = Object.fromEntries(ITEMS);
+// אפסנאות (אותו סדר כמו בשרת ובגיליון). qty = יש שדה כמות.
+const LOG = [
+  ['uni','מדים'], ['hlf','חלפס'], ['hrm','חרמונית'], ['plc','פלציב'], ['lao','תיק לאו'],
+  ['shl','שלוקר'], ['sks','שק״ש'], ['vst','וסט'], ['krm','קרמי'], ['ksd','קסדה'],
+  ['brk','ברכיות'], ['mgn','משקפי מגן'], ['mhs','מחסניות', true]
+];
+const LTITLE = Object.fromEntries(LOG.map(([k, t]) => [k, t]));
+const ST = {have:'יש לי', need:'אני צריך', no:'לא צריך'};
+const SRC = {home:'מהבית', signed:'חתום'};
 const WTYPES = ['M4 / M16', 'נגב', 'מאג'];
 const $ = id => document.getElementById(id);
-const S = {mineId:null, adminCode:null, rows:[], editId:null, q:'', summary:[]};
+const S = {mineId:null, adminCode:null, rows:[], editId:null, q:'', summary:[], tab:'arm', loadedName:'', dirty:false};
 
 /* ---------- חיבור לשרת ---------- */
 // כתובת ה-Web app של Apps Script. העמוד שולח אליה בקשות בלי עוגיות של Google,
@@ -226,15 +296,16 @@ async function call(fn, ...args) {
 }
 const MOCK = (() => {
   const db = [
-    {id:'d1', name:'כהן יואב', wtype:'M4 / M16', wserial:'4471203', items:{m5:{has:true, serial:'M5-22871'}, shm:{has:true, serial:'SH-301'}, olr:{has:true, serial:''}}, misc:'', status:'תקין', notes:''},
-    {id:'d2', name:'לוי עומר', wtype:'נגב', wserial:'N-88231', items:{trij:{has:true, serial:'TR-5520'}, r710:{has:true, serial:'710-44'}}, misc:'פק״ל מקלען', status:'בתיקון', notes:'כוונת באיפוס'},
+    {id:'d1', name:'כהן יואב', wtype:'M4 / M16', wserial:'4471203', items:{m5:{has:true, serial:'M5-22871'}, shm:{has:true, serial:'SH-301'}, olr:{has:true, serial:''}}, misc:'', status:'תקין', notes:'', log:{uni:{st:'have',src:'signed'}, ksd:{st:'need'}, mhs:{st:'need',qty:'4'}, sks:{st:'have',src:'home'}}},
+    {id:'d2', name:'לוי עומר', wtype:'נגב', wserial:'N-88231', items:{trij:{has:true, serial:'TR-5520'}, r710:{has:true, serial:'710-44'}}, misc:'פק״ל מקלען', status:'בתיקון', notes:'כוונת באיפוס', log:{uni:{st:'have',src:'signed'}, ksd:{st:'have',src:'signed'}, mhs:{st:'have',src:'signed',qty:'7'}, brk:{st:'need'}}},
     {id:'d3', name:'מזרחי דן', wtype:'M4 / M16', wserial:'', items:{m5:{has:true, serial:''}, mt:{has:true, serial:'M203-7712'}, mtzp:{has:true, serial:''}}, misc:'', status:'תקין', notes:''}
   ];
   const copy = r => JSON.parse(JSON.stringify(r));
   const norm = s => String(s || '').trim().replace(/\s+/g, ' ');
   const put = rec => { let i = db.findIndex(r => r.id === rec.id); const id = i < 0 ? 'd' + Date.now() : db[i].id; const row = {...copy(rec), id}; if (i < 0) db.push(row); else db[i] = row; return {id}; };
   return {
-    getSummary: () => db.map(r => ({status:r.status, wtype:r.wtype || (r.wserial ? 'לא צוין' : ''), items:Object.keys(r.items || {})})),
+    getSummary: () => db.map(r => ({status:r.status, wtype:r.wtype || (r.wserial ? 'לא צוין' : ''), items:Object.keys(r.items || {}), log:copy(r.log || {})})),
+    loadByName: name => { const r = db.find(r => norm(r.name) === norm(name)); return r ? copy(r) : null; },
     loadMine: id => { const r = db.find(r => r.id === id); if (!r) throw new Error('השורה לא נמצאה.'); return copy(r); },
     saveMine: rec => { if (!rec.id) { const o = db.find(r => norm(r.name) === norm(rec.name)); if (o) rec = {...rec, id:o.id}; } return put(rec); },
     adminList: code => { if (code !== 'demo') throw new Error('קוד סמל שגוי.'); return {rows: db.map(copy), sheetUrl: ''}; },
@@ -257,6 +328,31 @@ function syncItem(k) {
   $(k + '-serial').hidden = !on;
   $('it-' + k).classList.toggle('on', on);
 }
+for (const [k, t, qty] of LOG) {
+  const radios = Object.entries(ST).map(([v, l]) =>
+    `<label><input type="radio" name="l-${k}" value="${v}" class="${v}"><span>${l}</span></label>`).join('');
+  const srcs = Object.entries(SRC).map(([v, l]) =>
+    `<label><input type="radio" name="ls-${k}" value="${v}"><span>${l}</span></label>`).join('');
+  $('logitems').insertAdjacentHTML('beforeend',
+    `<div class="lrow" id="lr-${k}">
+       <span class="nm">${t}</span>
+       <div class="seg" role="radiogroup" aria-label="${t}">${radios}</div>
+       <div class="lsub" id="lsub-${k}" hidden>
+         <div class="seg small" id="lsrc-${k}" role="radiogroup" aria-label="${t}: מאיפה">${srcs}</div>
+         ${qty ? `<label class="q" id="lq-${k}">כמה<input type="number" min="0" max="999" inputmode="numeric" class="qty" id="lqty-${k}"></label>` : ''}
+       </div>
+     </div>`);
+  document.querySelectorAll(`#lr-${k} input`).forEach(i => i.addEventListener('change', () => syncLog(k)));
+}
+const radioVal = name => { const i = document.querySelector(`input[name="${name}"]:checked`); return i ? i.value : ''; };
+const setRadio = (name, v) => document.querySelectorAll(`input[name="${name}"]`).forEach(i => i.checked = i.value === v);
+function syncLog(k) {
+  const st = radioVal('l-' + k);
+  const qty = $('lq-' + k);
+  $('lsrc-' + k).hidden = st !== 'have';
+  if (qty) { qty.hidden = !st || st === 'no'; qty.firstChild.textContent = st === 'need' ? 'כמה צריך' : 'כמה יש'; }
+  $('lsub-' + k).hidden = st !== 'have' && !(qty && st === 'need');
+}
 function syncW() { $('f-wother-l').hidden = $('f-wtype').value !== 'אחר'; }
 $('f-wtype').addEventListener('change', syncW);
 
@@ -265,6 +361,12 @@ function readForm() {
   const d = {name: $('f-name').value.trim(), status: $('f-status').value, notes: $('f-notes').value.trim(), misc: $('f-misc').value.trim(),
     wtype: t === 'אחר' ? ($('f-wother').value.trim() || 'אחר') : t, wserial: $('f-wserial').value.trim(), items: {}};
   for (const [k] of ITEMS) if ($(k + '-has').checked) d.items[k] = {has: true, serial: $(k + '-serial').value.trim()};
+  d.log = {};
+  for (const [k, , qty] of LOG) {
+    const st = radioVal('l-' + k);
+    if (!st) continue;
+    d.log[k] = {st, src: st === 'have' ? radioVal('ls-' + k) : '', qty: qty && st !== 'no' ? $('lqty-' + k).value.trim() : ''};
+  }
   return d;
 }
 function fillForm(d) {
@@ -284,6 +386,16 @@ function fillForm(d) {
     $(k + '-serial').value = items[k] ? items[k].serial || '' : '';
     syncItem(k);
   }
+  const log = d.log || {};
+  for (const [k, , qty] of LOG) {
+    const it = log[k] || {};
+    setRadio('l-' + k, it.st || '');
+    setRadio('ls-' + k, it.src || '');
+    if (qty) $('lqty-' + k).value = it.qty || '';
+    syncLog(k);
+  }
+  S.dirty = false;
+  $('offer').hidden = true;
 }
 function validate(d) {
   // רק השם חובה. כל השאר אפשר להשאיר ריק.
@@ -291,7 +403,39 @@ function validate(d) {
 }
 function err(id, m) { const e = $(id); e.textContent = m || ''; e.hidden = !m; }
 function note(m) { const n = $('note'); n.textContent = m || ''; n.hidden = !m; }
-$('form').addEventListener('input', () => { err('f-err'); $('saved').hidden = true; });
+$('form').addEventListener('input', e => { err('f-err'); $('saved').hidden = true; if (e.target.id !== 'f-name') S.dirty = true; });
+$('form').addEventListener('change', e => { if (e.target.id !== 'f-name') S.dirty = true; });
+
+/* ---------- טעינה לפי שם ---------- */
+const normName = s => String(s || '').trim().replace(/\s+/g, ' ');
+function useLoaded(r) {
+  fillForm(r);
+  S.mineId = r.id; store(r.id); S.loadedName = normName(r.name);
+  soldierMode();
+  const o = $('offer'); o.textContent = 'נטענו הפרטים של ' + r.name + '. אפשר לערוך ולשמור.'; o.hidden = false;
+}
+async function lookupName(force) {
+  const n = normName($('f-name').value);
+  if (!n || S.editId !== null || (!force && n === S.loadedName)) return;
+  $('load-btn').disabled = true;
+  let r = null;
+  try { r = await call('loadByName', n); }
+  catch (e) { if (force) err('f-err', e.message); return; }
+  finally { $('load-btn').disabled = false; }
+  const o = $('offer');
+  if (!r) {
+    if (force) { o.textContent = 'לא מצאתי פרטים בשם הזה. אפשר למלא ולשמור.'; o.hidden = false; }
+    return;
+  }
+  if (force || !S.dirty) return useLoaded(r);
+  // הלוחם כבר התחיל למלא: לא דורסים לו, רק מציעים
+  o.textContent = 'יש כבר פרטים שמורים בשם הזה. ';
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'small'; b.textContent = 'טען אותם';
+  b.addEventListener('click', () => useLoaded(r));
+  o.append(b); o.hidden = false;
+}
+$('f-name').addEventListener('change', () => lookupName(false));
+$('load-btn').addEventListener('click', () => lookupName(true));
 
 function store(id) { try { id ? localStorage.setItem('tzalam-mine', id) : localStorage.removeItem('tzalam-mine'); } catch (e) {} }
 function stored() { try { return localStorage.getItem('tzalam-mine'); } catch (e) { return null; } }
@@ -302,6 +446,7 @@ function soldierMode() {
   $('cancel-btn').hidden = true;
   $('hint').hidden = false;
   $('logout').hidden = !S.mineId;
+  $('load-btn').hidden = false;
 }
 
 let busy = false;
@@ -319,7 +464,7 @@ $('form').addEventListener('submit', async ev => {
     } else {
       if (S.mineId) d.id = S.mineId;
       const r = await call('saveMine', d);
-      S.mineId = r.id; store(r.id); soldierMode();
+      S.mineId = r.id; store(r.id); S.loadedName = normName(d.name); soldierMode();
       if (S.adminCode) loadAdmin();
     }
     $('saved').hidden = false;
@@ -327,7 +472,7 @@ $('form').addEventListener('submit', async ev => {
   } catch (e) { err('f-err', e.message); }
   finally { busy = false; $('save-btn').disabled = false; $('save-btn').textContent = 'שמור'; }
 });
-$('logout').addEventListener('click', () => { S.mineId = null; store(null); fillForm(null); soldierMode(); });
+$('logout').addEventListener('click', () => { S.mineId = null; S.loadedName = ''; store(null); fillForm(null); soldierMode(); });
 
 /* ---------- סיכום ---------- */
 function bars(title, rows) {
@@ -366,8 +511,31 @@ function renderSummary() {
   box.append(bars('ציוד מהנשקייה', gear.slice(0, half)));
   if (gear.length > 1) box.append(bars('ציוד מהנשקייה (המשך)', gear.slice(half)));
 }
+function renderLogSummary() {
+  const docs = S.summary;
+  const tb = $('lbody'); tb.textContent = '';
+  let needAll = 0, mhs = 0, filled = 0;
+  for (const d of docs) if (d.log && Object.keys(d.log).length) filled++;
+  for (const [k, t, qty] of LOG) {
+    let have = 0, home = 0, signed = 0, need = 0;
+    for (const d of docs) {
+      const it = (d.log || {})[k]; if (!it) continue;
+      if (it.st === 'have') { have += qty ? (+it.qty || 1) : 1; if (it.src === 'home') home++; if (it.src === 'signed') signed++; }
+      if (it.st === 'need') need += qty ? (+it.qty || 1) : 1;
+    }
+    if (qty) mhs = need; else needAll += need;
+    const tr = document.createElement('tr');
+    const cells = [t, have, home, signed, need];
+    cells.forEach((v, i) => { const td = document.createElement('td'); td.textContent = i && !v ? '–' : v; if (i) td.className = 'num' + (i === 4 && v ? ' need' : ''); tr.append(td); });
+    tb.append(tr);
+  }
+  $('l-sol').textContent = filled;
+  $('l-need').textContent = needAll;
+  $('l-mhs').textContent = mhs;
+  $('lt-need').classList.toggle('alert', needAll > 0);
+}
 async function loadSummary() {
-  try { S.summary = await call('getSummary'); renderSummary(); }
+  try { S.summary = await call('getSummary'); renderSummary(); renderLogSummary(); }
   catch (e) { note('לא הצלחתי לטעון את הסיכום. רענן את העמוד.'); }
 }
 
@@ -392,14 +560,34 @@ function gearCell(d) {
   }
   td.append(box); return td;
 }
+function logCell(d, want) {
+  const td = document.createElement('td');
+  const log = d.log || {};
+  const keys = LOG.map(([k]) => k).filter(k => log[k] && log[k].st === want);
+  if (!keys.length) { td.innerHTML = '<span class="dash">—</span>'; return td; }
+  const box = document.createElement('div'); box.className = 'gear';
+  for (const k of keys) {
+    const it = log[k]; const s = document.createElement('span');
+    if (want === 'need') s.className = 'need';
+    s.textContent = LTITLE[k] + (it.qty ? ' ' + it.qty : '') + (want === 'have' && it.src ? ' · ' + SRC[it.src] : '');
+    box.append(s);
+  }
+  td.append(box); return td;
+}
+const HEADS = {arm: ['שם', 'נשק', 'ציוד מהנשקייה', 'שונות', 'תקינות', 'הערות', ''], log: ['שם', 'יש לי', 'צריך', 'לא מילא', '']};
 function renderTable() {
+  const th = $('thead'); th.textContent = '';
+  const hr = document.createElement('tr');
+  for (const h of HEADS[S.tab]) { const c = document.createElement('th'); c.textContent = h; hr.append(c); }
+  th.append(hr);
   const tb = $('tbody'); tb.textContent = '';
   const q = S.q.trim().toLowerCase();
-  const hay = d => [d.name, d.misc, d.wtype, d.wserial, ...Object.entries(d.items || {}).flatMap(([k, v]) => [TITLE[k], v.serial])];
+  const hay = d => S.tab === 'log' ? [d.name, ...Object.keys(d.log || {}).map(k => LTITLE[k])]
+    : [d.name, d.misc, d.wtype, d.wserial, ...Object.entries(d.items || {}).flatMap(([k, v]) => [TITLE[k], v.serial])];
   const rows = S.rows.filter(d => !q || hay(d).some(v => (v || '').toLowerCase().includes(q)))
     .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'));
   if (!rows.length) {
-    const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 7; td.className = 'empty';
+    const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = HEADS[S.tab].length; td.className = 'empty';
     td.textContent = q ? 'אין תוצאות לחיפוש הזה.' : 'עוד אף אחד לא מילא. שלח לצוות את הקישור.';
     tr.append(td); tb.append(tr); return;
   }
@@ -422,7 +610,11 @@ function renderTable() {
       catch (er) { x.disabled = false; x.textContent = 'המחיקה נכשלה'; }
     });
     ac.append(e, x);
-    tr.append(nm, weaponCell(d), gearCell(d), mi, st, no, ac);
+    if (S.tab === 'log') {
+      const left = LOG.filter(([k]) => !(d.log || {})[k]).map(([, t]) => t);
+      const lf = document.createElement('td'); lf.className = 'notes muted'; lf.textContent = left.length === LOG.length ? 'לא מילא אפסנאות' : left.join(', ');
+      tr.append(nm, logCell(d, 'have'), logCell(d, 'need'), lf, ac);
+    } else tr.append(nm, weaponCell(d), gearCell(d), mi, st, no, ac);
     tb.append(tr);
   }
 }
@@ -430,7 +622,7 @@ function adminEdit(d) {
   S.editId = d ? d.id : '';
   fillForm(d);
   $('form-h').textContent = d ? 'עריכת ' + (d.name || 'לוחם') : 'לוחם חדש';
-  $('hint').hidden = true; $('logout').hidden = true;
+  $('hint').hidden = true; $('logout').hidden = true; $('load-btn').hidden = true; $('offer').hidden = true;
   $('cancel-btn').hidden = false; err('f-err'); $('saved').hidden = true;
   $('form-card').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
@@ -467,26 +659,43 @@ $('admin-out').addEventListener('click', () => {
 // הייצוא בנוי כמו הטופס של הנשקייה: עמודה לכל פריט, ובה מספר הצ׳ או "יש"
 function csvCell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 $('csv-btn').addEventListener('click', () => {
-  const head = ['שם', 'סוג נשק', 'צ׳ נשק', ...ITEMS.map(([, t]) => t), 'שונות', 'תקינות', 'הערות'];
+  const sorted = [...S.rows].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'));
   const cell = it => it ? (it.serial || 'יש') : '';
-  const lines = [head, ...[...S.rows].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'))
-    .map(d => [d.name, d.wtype, d.wserial, ...ITEMS.map(([k]) => cell((d.items || {})[k])), d.misc, d.status || 'תקין', d.notes])];
+  const lcell = it => !it ? '' : [ST[it.st], it.st === 'have' ? SRC[it.src] : '', it.qty].filter(Boolean).join(' - ');
+  const lines = S.tab === 'log'
+    ? [['שם', ...LOG.map(([, t]) => t)], ...sorted.map(d => [d.name, ...LOG.map(([k]) => lcell((d.log || {})[k]))])]
+    : [['שם', 'סוג נשק', 'צ׳ נשק', ...ITEMS.map(([, t]) => t), 'שונות', 'תקינות', 'הערות'],
+       ...sorted.map(d => [d.name, d.wtype, d.wserial, ...ITEMS.map(([k]) => cell((d.items || {})[k])), d.misc, d.status || 'תקין', d.notes])];
   const blob = new Blob(['﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n')], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'tzalam-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.download = (S.tab === 'log' ? 'afsanaut-' : 'tzalam-') + new Date().toISOString().slice(0, 10) + '.csv';
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 });
 
+/* ---------- לשוניות ---------- */
+function setTab(t) {
+  S.tab = t === 'log' ? 'log' : 'arm';
+  document.querySelectorAll('.t-arm').forEach(e => e.hidden = S.tab !== 'arm');
+  document.querySelectorAll('.t-log').forEach(e => e.hidden = S.tab !== 'log');
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
+  $('form-h').dataset.tab = S.tab;
+  // שומר את הלשונית בכתובת, כדי שאפשר יהיה לשלוח קישור ישר לאפסנאות (#log)
+  try { history.replaceState(null, '', S.tab === 'log' ? '#log' : location.pathname + location.search); } catch (e) {}
+  if (S.adminCode) renderTable();
+}
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
 /* ---------- התחלה ---------- */
 (async function start() {
+  setTab(location.hash === '#log' ? 'log' : 'arm');
   if (!LIVE) note('מצב הדגמה: הנתונים כאן לדוגמה ולא נשמרים. קוד סמל להדגמה: demo');
   fillForm(null);
   soldierMode();
   loadSummary();
   const id = stored();
   if (id) {
-    try { fillForm(await call('loadMine', id)); S.mineId = id; soldierMode(); }
+    try { const r = await call('loadMine', id); fillForm(r); S.mineId = id; S.loadedName = normName(r.name); soldierMode(); }
     catch (e) { store(null); }
   }
 })();
